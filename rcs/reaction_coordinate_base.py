@@ -30,7 +30,7 @@ class ReactionCoordinate():
         """
         if not overwrite and os.path.isfile(file_name):
             raise FileExistsError('File exists and overwrite is False.')
-        if not append and not os.path.isfile(file_name):
+        if append and not os.path.isfile(file_name):
             raise FileNotFoundError('File needs to exist in order to append.')
         lines = self.get_lines_plumed()
         if rc_file:
