@@ -1,5 +1,6 @@
 import numpy as np
 from .hb4 import HB4
+from .rg import RG
 
 
 def load_xvg(file, max_rows=1000):
