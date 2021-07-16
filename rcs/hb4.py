@@ -37,16 +37,15 @@ class HB4(ReactionCoordinate):
             hb4 += np.linalg.norm(self.traj.xyz[:, idx1, :] - self.traj.xyz[:, idx2, :], axis=-1).flatten()
         return hb4 / len(hb4_idxs)
 
-    def plot(self, view=None, frames=(0, 1), **kwargs):
+    def plot(self, view=None, **kwargs):
         """ Plot the HB4 reaction coordinate for the trajectory stored in this class.
         The protein is plotted as a cartoon together with the backbone atoms.
         The N-O distances that comprise the HB4 reaction coordinate are plotted
         as dashed lines.
         Arguments:
+        TODOODODO kwargs
             view (nglview.NGLWidget): scence to render the image into;
                 if None instantiates a new one; default None
-            frames (tuple len=2): frames to plot, set is inclusive left, exclusive right
-                default (0, 1); which is the first frame
             kwargs: additional settings for plotting, these are:
             opacity (float): opacity for rendering the backbone atoms
             color (list, len=3): RBG code for color of HB4 bonds rendered; default [1, 0, 1]
@@ -56,15 +55,12 @@ class HB4(ReactionCoordinate):
                 gromacs nm; default 10 (nm -> A)
         """
         if not view:
-            view = self.get_view(frames=frames, **{k: v for k, v in kwargs.items() if k in ['opacity']})
-        hb4_idxs = self.get_indexes()
-        for idx1, idx2 in hb4_idxs:
-            self.add_distance(
-                view,
-                self.traj.xyz[frames[0], idx1, :],
-                self.traj.xyz[frames[0], idx2, :],
-                **{k: v for k, v in kwargs.items() if k in ['color', 'thickness', 'n_dash', 'factor']}
-            )
+            view = self.get_view(**{k: v for k, v in kwargs.items() if k in ['opacity']})
+        self.add_distances(
+            view,
+            self.get_indexes(),
+            **{k: v for k, v in kwargs.items() if k in ['color', 'label_color']},
+        )
         return view
 
 

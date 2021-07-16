@@ -1,14 +1,16 @@
-
-# pylint: disable=no-member
 import os
 from abc import abstractmethod
 import numpy as np
+import mdtraj as md
 import nglview as nv
 
 
 class ReactionCoordinate():
     """ Base class for reaction coordinate.
     Children need to define name and traj attributs. """
+
+    name: str
+    traj: md.Trajectory
 
     @abstractmethod
     def compute(self):
@@ -60,17 +62,32 @@ class ReactionCoordinate():
                 (p1 + i / n_dash * v_12).tolist(), (p1 + (i + 1) / n_dash * v_12).tolist(), color, thickness
             )
 
-    def get_view(self, frames=(0, 1), opacity=0.8):
+    def add_distances(self, view, atom_pairs, color='magenta', label_color='magenta'):
+        """ Renders distances between atoms in a nglview.View object. The corresponding
+        distance is indicated in the View object in Angstrom. Colors can be select
+        as any string that nglview accepts (I could not find a docu for that.)
+        Arguments:
+            view (nglview.View) scene in which to render the bond
+            atom_pairs (list of lists): atom pairs to connect via a bond
+            color (str): color of the bond
+            label_color (str): color of the label
+        """
+        view.add_distance(
+            atom_pair=[[float(x[0]), float(x[1])] for x in atom_pairs],
+            color=color,
+            label_color=label_color,
+        )
+
+
+    def get_view(self, opacity=0.8):
         """ Get a nglview.View scene and plot the chosen frames as a cartoon
         and the backbone as licorice. The coloring scheme used is based
         on the residue index of the chain segment and starts with red
         at the N-terminus going to blue at the C-terminus.
         Arguments:
-            frames (tuple len=2): frames to plot, set is inclusive left, exclusive right
-                default (0, 1); which is the first frame
             opacity (float): opacity for rendering the backbone atoms
         """
-        view = nv.show_mdtraj(self.traj[frames[0] : frames[1]])
+        view = nv.show_mdtraj(self.traj)
         view.clear()
         view.add_representation('cartoon', color='residueindex', selection='protein')
         view.add_representation('licorice', color='residueindex', selection='backbone', opacity=opacity)
