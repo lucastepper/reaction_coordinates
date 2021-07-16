@@ -1,6 +1,7 @@
 import numpy as np
 from .hb4 import HB4
 from .rg import RG
+from .de2e import DE2E
 
 
 def load_xvg(file, max_rows=1000):
