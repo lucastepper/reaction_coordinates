@@ -14,6 +14,7 @@ class HB4(ReactionCoordinate):
             axstart (int): first residue to consider, starting at 1
             axend (int): last residue to consider, starting at 1, inclusive
         """
+        super().__init__()
         self.name = 'hb4'
         self.traj = traj
         self.axstart = axstart
@@ -43,23 +44,17 @@ class HB4(ReactionCoordinate):
         The N-O distances that comprise the HB4 reaction coordinate are plotted
         as dashed lines.
         Arguments:
-        TODOODODO kwargs
             view (nglview.NGLWidget): scence to render the image into;
                 if None instantiates a new one; default None
-            kwargs: additional settings for plotting, these are:
-            opacity (float): opacity for rendering the backbone atoms
-            color (list, len=3): RBG code for color of HB4 bonds rendered; default [1, 0, 1]
-            thickness (float): thickness of the HB4 bonds rendered; default 0.1
-            n_dash (int): number of dashes of the HB4 bond; default 11
-            factor (float): conversion factor for the traj positions. nglview uses Angstrom
-                gromacs nm; default 10 (nm -> A)
+            For kwargs documentation, see the documentation for self.get_view
+            and self.add_distances.
         """
         if not view:
-            view = self.get_view(**{k: v for k, v in kwargs.items() if k in ['opacity']})
+            view = self.get_view(self.traj, **{k: v for k, v in kwargs.items() if k in self.kwargs_get_view})
         self.add_distances(
             view,
             self.get_indexes(),
-            **{k: v for k, v in kwargs.items() if k in ['color', 'label_color']},
+            **{k: v for k, v in kwargs.items() if k in self.kwargs_add_distances},
         )
         return view
 

@@ -12,6 +12,10 @@ class ReactionCoordinate():
     name: str
     traj: md.Trajectory
 
+    def __init__(self):
+        self.kwargs_get_view = ['frames', 'opacity', 'selection', 'superpose_to_frame']
+        self.kwargs_add_distances = ['color', 'label_color']
+
     @abstractmethod
     def compute(self):
         raise NotImplementedError
@@ -78,17 +82,28 @@ class ReactionCoordinate():
             label_color=label_color,
         )
 
-
-    def get_view(self, opacity=0.8):
+    def get_view(self, traj, frames=None, opacity=0.8, selection='backbone', superpose_to_frame=1):
         """ Get a nglview.View scene and plot the chosen frames as a cartoon
         and the backbone as licorice. The coloring scheme used is based
         on the residue index of the chain segment and starts with red
         at the N-terminus going to blue at the C-terminus.
         Arguments:
+            traj (mdtraj.Trajectory): traj to render
             opacity (float): opacity for rendering the backbone atoms
+            frames (indexes): indexes to select only some frames of traj; default None
+                Can be int, list, np.ndarray or range. if None, all frames are shown
+            selection (str): selection for the licorice that is rendered, for reference,
+            see: https://mdtraj.org/1.9.4/atom_selection.html
+            superpose_to_frame (int): superpose the plotted trajectory to the this frame; default 1
         """
-        view = nv.show_mdtraj(self.traj)
+        print(selection)
+        traj = traj.superpose(traj[min(0, superpose_to_frame - 1)])
+        if not frames:
+            view = nv.show_mdtraj(traj)
+        else:
+            view = nv.show_mdtraj(traj[frames])
+        selection_idxs = self.traj.topology.select(selection)
         view.clear()
         view.add_representation('cartoon', color='residueindex', selection='protein')
-        view.add_representation('licorice', color='residueindex', selection='backbone', opacity=opacity)
+        view.add_representation('licorice', color='residueindex', selection=selection_idxs, opacity=opacity)
         return view
