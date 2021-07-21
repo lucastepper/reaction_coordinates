@@ -10,11 +10,37 @@ class ReactionCoordinate():
     Children need to define name and traj attributs. """
 
     name: str
-    traj: md.Trajectory
 
-    def __init__(self):
+    def __init__(self, top=None):
         self.kwargs_get_view = ['frames', 'opacity', 'selection', 'superpose_to_frame']
         self.kwargs_add_distances = ['color', 'label_color']
+        self._top = top
+        self._traj = None
+
+    @property
+    def traj(self):
+        """ Get the trajectory obj if available. """
+        if self._traj is None:
+            raise ValueError('Trajectory not set up yet')
+        else:
+            return self._traj
+
+    @traj.setter
+    def traj(self, traj):
+        """ Set the trajectory obj either from a mdtraj.Trajectory obj or by
+        loading with mdtraj.load, possibly using self._top as topology """
+        if isinstance(traj, str):
+            if not self._top:
+                self._traj = md.load(traj)
+            else:
+                self._traj = md.load(traj, top=self._top)
+        elif isinstance(traj, md.Trajectory):
+            self._traj = traj
+        else:
+            raise ValueError(
+                'Trajectory needs to be path to a file that that mdtraj can load '
+                'or a mdtraj.Trajectory object. '
+            )
 
     @abstractmethod
     def compute(self):
@@ -96,7 +122,6 @@ class ReactionCoordinate():
             see: https://mdtraj.org/1.9.4/atom_selection.html
             superpose_to_frame (int): superpose the plotted trajectory to the this frame; default 1
         """
-        print(selection)
         traj = traj.superpose(traj[min(0, superpose_to_frame - 1)])
         if not frames:
             view = nv.show_mdtraj(traj)

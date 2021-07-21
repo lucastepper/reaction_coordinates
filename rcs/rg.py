@@ -7,14 +7,17 @@ class RG(ReactionCoordinate):
     """ Computes the radius of gyration RC, measuring the compactness
     of the selected molecule. RG is mass-weighted.
     """
-    def __init__(self, traj, selection):
+    def __init__(self, traj, selection, top=None):
         """ Constructor Arguments:
-            traj (mdtraj.Trajectory): trajectory
+            traj (mdtraj.Trajectory or path to one): trajectory or directory that can
+                be loaded yielding a mdtraj.Trajectory object.
+            top (str): path to topology for the given trajectory. Only needed when traj
+                is path to a file without topology information (ie .xtc); default: None
             selection (str): selection for the set of atoms to compute
                 rg from. Selection language from mdtraj, see reference:
                 https://mdtraj.org/1.9.4/atom_selection.html
         """
-        super().__init__()
+        super().__init__(top=top)
         self.name = 'rg'
         self.traj = traj
         self.selection = selection

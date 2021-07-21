@@ -58,7 +58,6 @@ class HB4(ReactionCoordinate):
         )
         return view
 
-
     def get_lines_plumed(self):
         """ Get the lines needed for the input file to compute
             the hb4 RC with plumed programm.
