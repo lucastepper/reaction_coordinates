@@ -8,13 +8,14 @@ class HB4(ReactionCoordinate):
     N-terminus and nitrogens on de C-terminus separated by 4 residues.
     Axstart and Axend are the same as with gromacs helix.
     """
-    def __init__(self, traj, axstart, axend):
+    def __init__(self, traj, axstart, axend, top=None):
         """ Constructor Arguments:
-            traj (mdtraj.Trajectory): trajectory
-            axstart (int): first residue to consider, starting at 1
-            axend (int): last residue to consider, starting at 1, inclusive
+            traj (mdtraj.Trajectory or path to one): trajectory or directory that can
+            be loaded yielding a mdtraj.Trajectory object.
+            top (str): path to topology for the given trajectory. Only needed when traj
+            is path to a file without topology information (ie .xtc); default: None
         """
-        super().__init__()
+        super().__init__(top=top)
         self.name = 'hb4'
         self.traj = traj
         self.axstart = axstart
