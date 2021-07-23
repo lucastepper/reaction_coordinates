@@ -10,10 +10,12 @@ class HB4(ReactionCoordinate):
     """
     def __init__(self, traj, axstart, axend, top=None):
         """ Constructor Arguments:
-            traj (mdtraj.Trajectory or path to one): trajectory or directory that can
-            be loaded yielding a mdtraj.Trajectory object.
-            top (str): path to topology for the given trajectory. Only needed when traj
-            is path to a file without topology information (ie .xtc); default: None
+                traj (mdtraj.Trajectory or path to one): trajectory or directory that can
+                be loaded yielding a mdtraj.Trajectory object.
+                top (str): path to topology for the given trajectory. Only needed when traj
+                is path to a file without topology information (ie .xtc); default: None
+                axstart (int) first residue to include in calculation of hb4, 0-based, inclusive
+                axend (int) last residue to include in calculation of hb4, 0-based, inclusive
         """
         super().__init__(top=top)
         self.name = 'hb4'
@@ -25,7 +27,7 @@ class HB4(ReactionCoordinate):
         """ Find all indexes for distances involved in hb4 RC. """
         hb4_idxs = []
         top = self.traj.topology
-        for i in range(self.axstart - 1, self.axend - 4):
+        for i in range(self.axstart, self.axend - 3):
             idx_n = top.select(f'resid {i} and backbone and type O')
             idx_o = top.select(f'resid {i + 4} and backbone and type N')
             hb4_idxs.append((idx_n, idx_o))

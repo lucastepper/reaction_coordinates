@@ -12,7 +12,7 @@ ROOTDIR = subprocess.run(['readlink', '-f', rcs.__path__[0]], check=True, captur
 ROOTDIR = ROOTDIR.stdout.decode('utf8').strip('rcs\n') + 'test/'
 
 
-def compute_hb4_gmx(load_dir):
+def compute_hb4_gmx(load_dir, axstart, axend):
     """ Compute the hb4 reaction coordinate using gromacs. Creates a temp folder
     in ROOTDIR to save the gromacs helix results and deletes it after finishing. """
     current_dir = os.getcwd()
@@ -26,8 +26,8 @@ def compute_hb4_gmx(load_dir):
         'gmx', '-quiet', 'helix',
         '-s', ROOTDIR + 'ala9/ala9.tpr',
         '-n', ROOTDIR + 'ala9/ala9.ndx',
-        '-ahxstart', '2',
-        '-ahxend', '8',
+        '-ahxstart', str(axstart + 1),
+        '-ahxend', str(axend + 1),
         '-f', load_dir],
         check=True,
     )
@@ -69,7 +69,7 @@ def compute_hb4_plumed(hb4_obj, xtcfile, mcfile):
 @pytest.mark.parametrize(
     'file, axstart, axend',
     [
-        ('ala9/ala9', 2, 8)
+        ('ala9/ala9', 1, 7)
     ],
 )
 def test_hb4_against_gmx(file, axstart, axend):
@@ -78,14 +78,14 @@ def test_hb4_against_gmx(file, axstart, axend):
     traj = md.load(f'{ROOTDIR}{file}.xtc', top=f'{ROOTDIR}{file}.pdb')
     traj.make_molecules_whole()
     hb4 = rcs.HB4(traj, axstart, axend)
-    hb4_gmx = compute_hb4_gmx(f'{ROOTDIR}{file}.xtc')
+    hb4_gmx = compute_hb4_gmx(f'{ROOTDIR}{file}.xtc', axstart, axend)
     np.testing.assert_allclose(hb4.compute(), hb4_gmx, atol=1e-6)
 
 
 @pytest.mark.parametrize(
     'file, axstart, axend',
     [
-        ('ala9/ala9', 2, 8)
+        ('ala9/ala9', 1, 7)
     ],
 )
 def test_hb4_against_plumed(file, axstart, axend):
