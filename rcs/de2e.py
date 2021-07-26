@@ -21,16 +21,6 @@ class DE2E(ReactionCoordinate):
         self.idxs_start = self.traj.topology.select('resid 0')
         self.idxs_end = self.traj.topology.select(f'resid {self.traj.topology.n_residues - 1}')
 
-    def compute_com(self, idxs):
-        """ Compute the center of a group of atoms.
-        Arguments:
-            indexes(indexes): Indexes for the group of atom,
-                can be list, range, int, np.ndarray
-        """
-        pos = self.traj.xyz[:, idxs, :]
-        masses = np.array([x.element.mass for x in self.traj.topology.atoms if x.index in idxs])
-        return (pos * np.expand_dims(masses, axis=(0, 2))).sum(axis=1) / masses.sum()
-
     @property
     def com_start(self):
         """ Get the center of mass for the first residue. """

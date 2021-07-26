@@ -50,6 +50,16 @@ class ReactionCoordinate():
     def get_lines_plumed(self):
         pass
 
+    def compute_com(self, idxs):
+        """ Compute the center of a group of atoms.
+        Arguments:
+            indexes(indexes): Indexes for the group of atom,
+                can be list, range, int, np.ndarray
+        """
+        pos = self.traj.xyz[:, idxs, :]
+        masses = np.array([x.element.mass for x in self.traj.topology.atoms if x.index in idxs])
+        return (pos * np.expand_dims(masses, axis=(0, 2))).sum(axis=1) / masses.sum()
+
     def write_plumed(self, file_name, rc_file=None, append=False, overwrite=True, stride=1):
         """ Write the lines for plumed into a file.
         Arguments:
