@@ -34,7 +34,7 @@ def rc_hbonds(chain1, chain2, type_):
     return rc
 
 
-def compute_meanhbonddist_plumed(rc_obj, xtcfile):
+def compute_meanhbonddist_plumed(rc_obj, xtcfile, mcfile=None):
     """ Compute the reaction coordinate using plumed driver. Creates a temp folder
     in ROOTDIR to save the plumed results and deletes it after finishing. """
     current_dir = os.getcwd()
@@ -44,13 +44,14 @@ def compute_meanhbonddist_plumed(rc_obj, xtcfile):
         os.mkdir(temp_dir)
     os.chdir(temp_dir)
     rc_obj.write_plumed('plumed.dat', rc_file='rc.xvg')
-    subprocess.run([
+    args = [
          'plumed', 'driver',
          '--mf_xtc', ROOTDIR + xtcfile,
-         '--plumed', 'plumed.dat'],
-        check=True,
-        capture_output=True,
-    )
+         '--plumed', 'plumed.dat',
+    ]
+    if mcfile:
+        args.extend(['--mc', ROOTDIR + mcfile])
+    subprocess.run(args, check=True, capture_output=True)
     rc = rcs.load_xvg('rc.xvg')
     os.chdir(current_dir)
     for file in os.listdir(temp_dir):
@@ -68,10 +69,10 @@ def test_against_ref():
     chain2 = md.load('nfgails/nfgails_long.pdb', atom_indices=top.select('chainid 1'))
     chain3 = md.load('nfgails/nfgails_long.pdb', atom_indices=top.select('chainid 2'))
     # make rc classes
-    rc1 = rcs.MeanHbondDistance(traj, resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(0, 1))
-    rc2 = rcs.MeanHbondDistance(traj, resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(0, 1))
-    rc3 = rcs.MeanHbondDistance(traj, resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(1, 2))
-    rc4 = rcs.MeanHbondDistance(traj, resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(1, 2))
+    rc1 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(0, 1))
+    rc2 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(0, 1))
+    rc3 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(1, 2))
+    rc4 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(1, 2))
     # test
     assert rc_hbonds(chain1, chain2, type_='inner') - rc1.compute() < 1e-7
     assert rc_hbonds(chain1, chain2, type_='outer') - rc2.compute() < 1e-7
@@ -79,15 +80,40 @@ def test_against_ref():
     assert rc_hbonds(chain2, chain3, type_='outer') - rc4.compute() < 1e-7
 
 
-def test_against_plumed():
+def test_against_plumed_hbonds():
     """ Check that plumed gives the same result. """
     traj = md.load('nfgails/nfgails.xtc', top='nfgails/nfgails.pdb')
-    rc1 = rcs.MeanHbondDistance(traj, resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(0, 1))
-    rc2 = rcs.MeanHbondDistance(traj, resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(0, 1))
-    rc3 = rcs.MeanHbondDistance(traj, resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(1, 2))
-    rc4 = rcs.MeanHbondDistance(traj, resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(1, 2))
+    rc1 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(0, 1))
+    rc2 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(0, 1))
+    rc3 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(1, 2))
+    rc4 = rcs.MeanHbondDistance(traj, 'hbonds', resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(1, 2))
     # test
     np.testing.assert_allclose(compute_meanhbonddist_plumed(rc1, 'nfgails/nfgails.xtc'), rc1.compute(), atol=1e-6)
     np.testing.assert_allclose(compute_meanhbonddist_plumed(rc2, 'nfgails/nfgails.xtc'), rc2.compute(), atol=1e-6)
     np.testing.assert_allclose(compute_meanhbonddist_plumed(rc3, 'nfgails/nfgails.xtc'), rc3.compute(), atol=1e-6)
     np.testing.assert_allclose(compute_meanhbonddist_plumed(rc4, 'nfgails/nfgails.xtc'), rc4.compute(), atol=1e-6)
+
+def test_against_plumed_com():
+    """ Check that plumed gives the same result. """
+    traj = md.load('nfgails/nfgails.xtc', top='nfgails/nfgails.pdb')
+    rc1 = rcs.MeanHbondDistance(traj, 'com', resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(0, 1))
+    rc2 = rcs.MeanHbondDistance(traj, 'com', resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(0, 1))
+    rc3 = rcs.MeanHbondDistance(traj, 'com', resnames=[('LEU', 'GLY'), ('ALA', 'ILE'), ('PHE', 'SER')], chains=(1, 2))
+    rc4 = rcs.MeanHbondDistance(traj, 'com', resnames=[('PHE', 'ILE'), ('ALA', 'GLY'), ('LEU', 'ASN')], chains=(1, 2))
+    # test
+    np.testing.assert_allclose(
+        compute_meanhbonddist_plumed(rc1, 'nfgails/nfgails.xtc', mcfile='nfgails/nfgails_mcfile'),
+        rc1.compute(), rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        compute_meanhbonddist_plumed(rc2, 'nfgails/nfgails.xtc', mcfile='nfgails/nfgails_mcfile'),
+        rc2.compute(), rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        compute_meanhbonddist_plumed(rc3, 'nfgails/nfgails.xtc', mcfile='nfgails/nfgails_mcfile'),
+        rc3.compute(), rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        compute_meanhbonddist_plumed(rc4, 'nfgails/nfgails.xtc', mcfile='nfgails/nfgails_mcfile'),
+        rc4.compute(), rtol=1e-5
+    )
