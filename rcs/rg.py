@@ -65,7 +65,7 @@ class RG(ReactionCoordinate):
         """
         selection_idxs = self.traj.topology.select(self.selection)
         # remember that plumed starts to count at one
-        atoms_str = ','.join([str(x + 1) for x in selection_idxs])
+        atoms_str = self.idxs_to_str(selection_idxs)
         lines = []
         lines.append(f'rg: GYRATION MASS_WEIGHTED ATOMS={atoms_str}')
         lines.append(' \n')

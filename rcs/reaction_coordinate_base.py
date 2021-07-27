@@ -60,6 +60,34 @@ class ReactionCoordinate():
         masses = np.array([x.element.mass for x in self.traj.topology.atoms if x.index in idxs])
         return (pos * np.expand_dims(masses, axis=(0, 2))).sum(axis=1) / masses.sum()
 
+    def idxs_to_str(self, idxs):
+        """ Convert a set of indexes to a string containing the indexes comma separated.
+        If more than 2 indexes are consecutive, convert them into a range of the from
+        start-end (inclusve on both sides). This format is accepted by plumed for
+        atom selection. Assumes indexes are zero bases and increments them by one.
+        Arguments:
+            idxs (iterable of ints) Indexes. """
+
+        # items are either ints for single idxs or strings for ranges
+        items = []
+        idxs = list(idxs)
+        # increment idxs for mdtraj -> plumed conversion
+        idxs = sorted([int(x) + 1 for x in idxs])
+        while len(idxs) > 0:
+            n_consecutive = 0
+            for i in range(len(idxs) - 1):
+                if idxs[i] + 1 != idxs[i + 1]:
+                    break
+                n_consecutive += 1
+            if n_consecutive > 1:
+                items.append((idxs[0], idxs[n_consecutive]))
+                for __ in range(n_consecutive + 1):
+                    idxs.pop(0)
+            else:
+                items.append(idxs.pop(0))
+        # convert ranges to idx_start-idxs_end, ints to strings, join by comma
+        return ','.join([str(x) if isinstance(x, int) else f'{x[0]}-{x[1]}' for x in items])
+
     def write_plumed(self, file_name, rc_file=None, append=False, overwrite=True, stride=1):
         """ Write the lines for plumed into a file.
         Arguments:
@@ -83,7 +111,8 @@ class ReactionCoordinate():
                 fh.write(line)
 
     def add_distance(self, view, p1, p2, color=(1, 0, 1), thickness=0.1, n_dash=11, factor=10):
-        """ Render a bond as a dahsed cylinder in a nglview.View object.
+        """ Render a bond as a dahsed cylinder in a nglview.View object This is slow and only works
+        for a single frame (as it is not moving with the frames for multiple).
         Arguments:
             view (nglview.View) scene in which to render the bond
             p1 (np.ndarray): bond start

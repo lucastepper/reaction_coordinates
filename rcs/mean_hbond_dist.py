@@ -73,11 +73,11 @@ class MeanContactDistance(ReactionCoordinate):
         if self.mode == 'hbonds':
             self._contacts.extend([
                 (
-                    self._get_bb_idx_by_element(idxs_res1, 'nitrogen'), 
+                    self._get_bb_idx_by_element(idxs_res1, 'nitrogen'),
                     self._get_bb_idx_by_element(idxs_res2, 'oxygen'),
                 ),
                 (
-                    self._get_bb_idx_by_element(idxs_res2, 'nitrogen'), 
+                    self._get_bb_idx_by_element(idxs_res2, 'nitrogen'),
                     self._get_bb_idx_by_element(idxs_res1, 'oxygen'),
                 ),
             ])
@@ -86,10 +86,10 @@ class MeanContactDistance(ReactionCoordinate):
 
     def _identify_residue(self, resid, resname, chainid):
         """ Check that given the description for the one of the residues
-        in a contact only identifies a single residue. 
+        in a contact only identifies a single residue.
         """
         if resid is None and resname is None:
-            raise ValueError(f'Please identify the {name} residue involved in contact either by name or by id.')
+            raise ValueError(f'Please identify the residue involved in contact either by name or by id.')
         select_str = ''
         if resname is not None:
             select_str += f'resname {resname} and '
@@ -173,8 +173,8 @@ class MeanContactDistance(ReactionCoordinate):
             lines.append('... \n')
         elif self.mode == 'com':
             for i, (idxs_com1, idxs_com2) in enumerate(self._contacts):
-                idxs_com1 = ','.join([str(x + 1) for x in idxs_com1])
-                idxs_com2 = ','.join([str(x + 1) for x in idxs_com2])
+                idxs_com1 = self.idxs_to_str(idxs_com1)
+                idxs_com2 = self.idxs_to_str(idxs_com2)
                 lines.append(f'com{2 * i + 1}: COM ATOMS={idxs_com1} NOPBC \n')
                 lines.append(f'com{2 * i + 2}: COM ATOMS={idxs_com2} NOPBC \n')
                 lines.append(f'd{i + 1}: DISTANCE ATOMS=com{2 * i + 1},com{2 * i + 2} NOPBC \n')

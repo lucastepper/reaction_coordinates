@@ -67,8 +67,8 @@ class DE2E(ReactionCoordinate):
         """
         lines = []
         # remember that plumed starts to count at one
-        idxs_start_str = ','.join([str(x + 1) for x in self.idxs_start])
-        idxs_end_str = ','.join([str(x + 1) for x in self.idxs_end])
+        idxs_start_str = self.idxs_to_str(self.idxs_start)
+        idxs_end_str = self.idxs_to_str(self.idxs_end)
         lines.append(f'com1: COM ATOMS={idxs_start_str} NOPBC \n')
         lines.append(f'com2: COM ATOMS={idxs_end_str} NOPBC \n')
         lines.append(f'{self.name}: DISTANCE ATOMS=com1,com2 NOPBC \n')
