@@ -3,18 +3,4 @@ from .plumed_dump_masscharge import plumed_dump_masscharge
 from .hb4 import HB4
 from .rg import RG
 from .de2e import DE2E
-from .mean_hbond_dist import MeanHbondDistance
-
-
-def load_xvg(file, max_rows=1000):
-    """ Load a plumed .xvg file output. """
-    output = None
-    skiped_rows = 0
-    while output is None:
-        try:
-            output = np.loadtxt(file, skiprows=skiped_rows)
-        except ValueError:
-            skiped_rows += 1
-        if skiped_rows > max_rows:
-            raise ValueError(f'Could not load {file}, the first {max_rows} lines were misformated')
-    return output
+from .mean_hbond_dist import MeanContactDistance
