@@ -1,48 +1,51 @@
 import numpy as np
-from rcs.reaction_coordinate_base import ReactionCoordinate
+from rcs.reaction_coordinate_base_mda import ReactionCoordinate
 
 
 class HB4(ReactionCoordinate):
-    """ Computes the hb4 RC, measuring the formation of alpha helices.
+    """Computes the hb4 RC, measuring the formation of alpha helices.
     The RC is defined as the average distance between oxygens on the
     N-terminus and nitrogens on de C-terminus separated by 4 residues.
     Axstart and Axend are the same as with gromacs helix.
     """
+
     def __init__(self, traj, axstart, axend, top=None):
-        """ Constructor Arguments:
-                traj (mdtraj.Trajectory or path to one): trajectory or directory that can
-                be loaded yielding a mdtraj.Trajectory object.
-                top (str): path to topology for the given trajectory. Only needed when traj
-                is path to a file without topology information (ie .xtc); default: None
-                axstart (int) first residue to include in calculation of hb4, 0-based, inclusive
-                axend (int) last residue to include in calculation of hb4, 0-based, inclusive
+        """Constructor Arguments:
+        traj (mda.Universe|str): Trajectory. Either a mda.Universe or path to a file
+            that can be passed mda.Universe initializer.
+        top (str): path to topology for the given trajectory. Only needed when traj
+            is path to a file without topology information (ie .xtc); default: None
+        axstart (int) first residue to include in calculation of hb4, 0-based, inclusive
+        axend (int) last residue to include in calculation of hb4, 0-based, inclusive
         """
         super().__init__(top=top)
-        self.name = 'hb4'
-        self.traj = traj
+        self.name = "hb4"
+        self.universe = traj
         self.axstart = axstart
         self.axend = axend
 
     def get_indexes(self):
-        """ Find all indexes for distances involved in hb4 RC. """
+        """Find all indexes for distances involved in hb4 RC."""
         hb4_idxs = []
         top = self.traj.topology
         for i in range(self.axstart, self.axend - 3):
-            idx_n = top.select(f'resid {i} and backbone and type O')
-            idx_o = top.select(f'resid {i + 4} and backbone and type N')
+            idx_n = top.select(f"resid {i} and backbone and type O")
+            idx_o = top.select(f"resid {i + 4} and backbone and type N")
             hb4_idxs.append((idx_n, idx_o))
         return hb4_idxs
 
     def compute(self):
-        """ Computes the hb4 RC given traj, axstart, axend from constructor. """
+        """Computes the hb4 RC given traj, axstart, axend from constructor."""
         hb4 = np.zeros(len(self.traj))
         hb4_idxs = self.get_indexes()
         for idx1, idx2 in hb4_idxs:
-            hb4 += np.linalg.norm(self.traj.xyz[:, idx1, :] - self.traj.xyz[:, idx2, :], axis=-1).flatten()
+            hb4 += np.linalg.norm(
+                self.traj.xyz[:, idx1, :] - self.traj.xyz[:, idx2, :], axis=-1
+            ).flatten()
         return hb4 / len(hb4_idxs)
 
     def plot(self, view=None, **kwargs):
-        """ Plot the HB4 reaction coordinate for the trajectory stored in this class.
+        """Plot the HB4 reaction coordinate for the trajectory stored in this class.
         The protein is plotted as a cartoon together with the backbone atoms.
         The N-O distances that comprise the HB4 reaction coordinate are plotted
         as dashed lines.
@@ -53,7 +56,9 @@ class HB4(ReactionCoordinate):
             and self.add_distances.
         """
         if not view:
-            view = self.get_view(self.traj, **{k: v for k, v in kwargs.items() if k in self.kwargs_get_view})
+            view = self.get_view(
+                self.traj, **{k: v for k, v in kwargs.items() if k in self.kwargs_get_view}
+            )
         self.add_distances(
             view,
             self.get_indexes(),
@@ -62,23 +67,23 @@ class HB4(ReactionCoordinate):
         return view
 
     def get_lines_plumed(self):
-        """ Get the lines needed for the input file to compute
-            the hb4 RC with plumed programm.
+        """Get the lines needed for the input file to compute
+        the hb4 RC with plumed programm.
         """
         hb4_idxs = self.get_indexes()
         lines = []
         for i, (idx1, idx2) in enumerate(hb4_idxs):
-            lines.append(f'hb4d{i + 1}: DISTANCE ATOMS={int(idx1) + 1},{int(idx2) + 1} NOPBC \n')
-        lines.append(' \n')
-        lines.append(f'{self.name}: CUSTOM ...  \n')
-        lines.append('ARG={}  \n'.format(','.join([f'hb4d{i + 1}' for i in range(len(hb4_idxs))])))
-        lines.append('VAR={}  \n'.format(','.join([f'a{i}' for i in range(len(hb4_idxs))])))
+            lines.append(f"hb4d{i + 1}: DISTANCE ATOMS={int(idx1) + 1},{int(idx2) + 1} NOPBC \n")
+        lines.append(" \n")
+        lines.append(f"{self.name}: CUSTOM ...  \n")
+        lines.append("ARG={}  \n".format(",".join([f"hb4d{i + 1}" for i in range(len(hb4_idxs))])))
+        lines.append("VAR={}  \n".format(",".join([f"a{i}" for i in range(len(hb4_idxs))])))
         lines.append(
-            'FUNC={'
-            + '({}) / '.format(' + '.join([f'a{i}' for i in range(len(hb4_idxs))]))
-            + '%i} \n'%len(hb4_idxs)
+            "FUNC={"
+            + "({}) / ".format(" + ".join([f"a{i}" for i in range(len(hb4_idxs))]))
+            + "%i} \n" % len(hb4_idxs)
         )
-        lines.append('PERIODIC=NO \n')
-        lines.append('... \n')
-        lines.append(' \n')
+        lines.append("PERIODIC=NO \n")
+        lines.append("... \n")
+        lines.append(" \n")
         return lines
